@@ -1,0 +1,70 @@
+version: "1"
+services:
+  consul:
+    image: 'consul:1.10.0'
+    container_name: consul
+    ports:
+      - "8500:8500"
+    environment:
+      CONSUL_BIND_INTERFACE: lo
+    logging:
+      driver: json-file
+      options:
+        max-size: 1k
+    networks:
+      - webnet
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - 3306:3306
+    volumes:
+      - ~/apps/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=p2pApp
+      - POSTGRES_USER=merozHater
+      - POSTGRES_DB=test
+  vault:
+    image: 'vault:1.5.3'
+    container_name: vault
+    ports:
+      - "8201:8201"
+      - "8200:8200"
+    external_links:
+      - consul:consul
+    volumes:
+      - ./vault/config:/vault/config
+      - ./vault/policies:/vault/policies
+      - ./vault/logs:/vault/logs
+      - ./vault/data:/vault/data
+      - ./vault/script:/vault/script
+    environment:
+      - VAULT_ADDR=http://vault:8201
+      - VAULT_DEV_ROOT_TOKEN_ID=00000000-0000-0000-0000-000000000000
+      - VAULT_TOKEN=00000000-0000-0000-0000-000000000000
+    entrypoint: vault server -dev -config=/vault/config/vault-config.json -dev-root-token-id="00000000-0000-0000-0000-000000000000"
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - webnet
+  stats:
+    image: 'bitnami/rabbitmq:3.8.9'
+    environment:
+      - RABBITMQ_NODE_TYPE=stats
+      - RABBITMQ_NODE_NAME=rabbit@stats
+      - RABBITMQ_ERL_COOKIE=s3cr3tc00ki3
+      - RABBITMQ_PLUGINS=rabbitmq_peer_discovery_consul,rabbitmq_management
+    ports:
+      - '4369:4369'
+      - '5672:5672'
+      - '15672:15672'
+      - '25672:25672'
+    volumes:
+      - './conf/rabbitmq/rabbitmq.conf:/opt/bitnami/rabbitmq/etc/rabbitmq/rabbitmq.conf'
+      - './conf/rabbitmq/definitions.json:/opt/bitnami/rabbitmq/etc/rabbitmq/definitions.json'
+    depends_on:
+      - consul
+      - mysql
+    networks:
+      - webnet
+networks:
+  webnet:

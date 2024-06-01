@@ -1,0 +1,14 @@
+{
+  "dependencies": [
+    {
+      "name": "ms-service-utils",
+      "repository": "https://glic-solutions@bitbucket.org/glicsolutions/ms-service-utils.git",
+      "branch": "master"
+    },
+    {
+      "name": "iso-parser",
+      "repository": "https://glic-solutions@bitbucket.org/glicsolutions/iso-parser.git",
+      "branch": "master"
+    }
+  ]
+}
